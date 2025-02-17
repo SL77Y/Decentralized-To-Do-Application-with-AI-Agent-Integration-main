@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum TaskStatus {
+  IN_PROGRESS
+  COMPLETED
+  ARCHIVED
+}
+
+model User {
+  id             String    @id @default(uuid())
+  first_name     String
+  last_name      String
+  email          String    @unique
+  password       String
+  wallet_address String    @unique @db.VarChar(42)
+  refresh_token  String?   @db.Text
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+  deleted_at     DateTime?
+  tasks          Task[]
+
+  @@index([email])
+  @@index([wallet_address])
+}
+
+model Task {
+  id               String     @id @default(uuid())
+  title            String     @db.VarChar(255)
+  user_id          String
+  user             User       @relation(fields: [user_id], references: [id])
+  task_hash        String     @unique @db.VarChar(66)
+  status           TaskStatus @default(IN_PROGRESS)
+  priority         Int        @default(0)
+  transaction_hash String?    @db.VarChar(66)
+  due_date         DateTime?
+  completed_at     DateTime?
+  created_at       DateTime   @default(now())
+  updated_at       DateTime   @updatedAt
+  deleted_at       DateTime?
+
+  @@index([user_id])
+  @@index([task_hash])
+  @@index([priority])
+  @@index([status])
+  @@index([user_id, status, priority])
+}
